@@ -1,14 +1,16 @@
-# Project
-🔷 Objective
-To design and implement an Integrated Security Platform for Web Applications that unifies Web Application Firewall (WAF), Endpoint Detection and Response (EDR), and Network Access Control (NAC) functionalities. The platform aims to deliver real-time threat prevention, detection, and access control to ensure the confidentiality, integrity, and availability of modern web applications and their supporting infrastructure.
+AML Transaction Monitoring System
+Project Objective
 
-🔷 Description
-The Integrated Security Platform for Web Applications is a multi-layered cybersecurity solution designed to provide holistic protection across web applications, endpoints, and network access points. It incorporates:
+The AML Transaction Monitoring System is designed to identify, analyze, and report potentially suspicious financial activity in accordance with Anti-Money Laundering (AML) principles. This project provides a functional framework for detecting high-risk transactions, unusual patterns, and potential money laundering activities, integrating both rule-based logic and optional machine learning techniques to enhance detection accuracy.
 
-Web Application Firewall (WAF): Filters and blocks malicious HTTP/S traffic to protect against common web exploits such as SQL injection, cross-site scripting (XSS), and remote code execution.
+Core Features
 
-Endpoint Detection and Response (EDR): Continuously monitors endpoint devices for suspicious activity, tracks process behavior, and provides alerting and response mechanisms to detect and mitigate threats at the host level.
+Rule-Based Transaction Monitoring: Flags transactions exceeding predefined thresholds or exhibiting anomalous patterns.
 
-Network Access Control (NAC): Enforces strict access control by authenticating and authorizing devices before granting them network access, thereby preventing unauthorized or compromised systems from connecting to critical infrastructure.
+Velocity Analysis: Detects frequent transaction activity within condensed time intervals.
 
-By combining these core components, the platform delivers a robust defense-in-depth strategy tailored for web-based environments. It is ideal for organizations seeking to secure their applications, monitor endpoint activity, and enforce access control policies through a unified interface.
+Geographical Risk Assessment: Evaluates transaction risk based on country and region, highlighting cross-border transactions in high-risk jurisdictions.
+
+Comprehensive Reporting: Generates tabular reports and visual analytics to support investigative review.
+
+Machine Learning Module (Optional): Utilizes historical transaction data to predict high-risk activity using classification algorithms.
