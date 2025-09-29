@@ -26,7 +26,11 @@ interface UploadedFileState {
   message: string;
 }
 
-export const TransactionAnalysis: React.FC = () => {
+interface TransactionAnalysisProps {
+  setCurrentPage?: (page: 'dashboard' | 'transactions', filter?: 'all' | 'normal' | 'suspicious' | 'flagged') => void;
+}
+
+export const TransactionAnalysis: React.FC<TransactionAnalysisProps> = ({ setCurrentPage }) => {
   const { user, isAuthenticated } = useAuth(); // Keeping user for potential future use or if false positive
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -380,15 +384,15 @@ export const TransactionAnalysis: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="p-6 max-w-7xl mx-auto text-center text-gray-700">Loading transactions...</div>;
+    return <div className="w-full p-6 text-center text-gray-700">Loading transactions...</div>;
   }
 
   if (error) {
-    return <div className="p-6 max-w-7xl mx-auto text-center text-red-600">Error: {error}</div>;
+    return <div className="w-full p-6 text-center text-red-600">Error: {error}</div>;
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="w-full">
       <div className="mb-8">
         <h2 className="text-3xl font-bold text-gray-900 mb-2">Transaction Analysis</h2>
         <p className="text-gray-600">AI-powered analysis of transaction patterns and suspicious activities</p>
@@ -478,62 +482,19 @@ export const TransactionAnalysis: React.FC = () => {
         </div>
       )}
 
-      {/* Search and Filter Controls */}
+      {/* Charts Toggle */}
       <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="h-5 w-5 text-gray-400 absolute left-3 top-3" />
-            <input
-              type="text"
-              placeholder="Search transactions, accounts, or descriptions..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-            />
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => setShowCharts(!showCharts)}
-              className={`px-4 py-2 rounded-lg transition-colors flex items-center ${
-                showCharts ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              <BarChart3 className="h-4 w-4 mr-2" />
-              {showCharts ? 'Hide Charts' : 'Show Charts'}
-            </button>
-            
-            <div className="relative">
-              <Filter className="h-5 w-5 text-gray-400 absolute left-3 top-3" />
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as any)}
-                className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-              >
-                <option value="all">All Statuses</option>
-                <option value="flagged">Flagged</option>
-                <option value="suspicious">Suspicious</option>
-                <option value="normal">Normal</option>
-              </select>
-            </div>
-            
-            <button
-              onClick={exportAllTransactionsToServer} // Export all transactions from backend
-              className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Export All
-            </button>
-
-            <button
-              onClick={clearAllTransactions}
-              disabled={transactions.length === 0 || !isAuthenticated}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Clear All
-            </button>
-          </div>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-gray-900">Analytics Dashboard</h3>
+          <button
+            onClick={() => setShowCharts(!showCharts)}
+            className={`px-4 py-2 rounded-lg transition-colors flex items-center ${
+              showCharts ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            <BarChart3 className="h-4 w-4 mr-2" />
+            {showCharts ? 'Hide Charts' : 'Show Charts'}
+          </button>
         </div>
         {error && (
           <div className="mt-4 p-3 rounded-lg text-sm bg-red-100 text-red-800">
@@ -584,188 +545,24 @@ export const TransactionAnalysis: React.FC = () => {
         </div>
       )}
 
-      {/* Summary Stats & Transaction Table - Only show if there are transactions */}
+      {/* Summary Stats - Only show if there are transactions */}
       {transactions.length > 0 && (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white p-4 rounded-lg shadow border-l-4 border-red-500">
-              <p className="text-sm text-gray-600">Flagged</p>
-              <p className="text-2xl font-bold text-red-600">
-                {transactions.filter(t => t.status === 'flagged').length}
-              </p>
-            </div>
-            <div className="bg-white p-4 rounded-lg shadow border-l-4 border-amber-500">
-              <p className="text-sm text-gray-600">Suspicious</p>
-              <p className="text-2xl font-bold text-amber-600">
-                {transactions.filter(t => t.status === 'suspicious').length}
-              </p>
-            </div>
-            <div className="bg-white p-4 rounded-lg shadow border-l-4 border-green-500">
-              <p className="text-sm text-gray-600">Normal</p>
-              <p className="text-2xl font-bold text-green-600">
-                {transactions.filter(t => t.status === 'normal').length}
-              </p>
-            </div>
-            <div className="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
-              <p className="text-sm text-gray-600">Total Analyzed</p>
-              <p className="text-2xl font-bold text-blue-600">{transactions.length}</p>
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white p-4 rounded-lg shadow border-l-4 border-red-500 cursor-pointer hover:bg-red-50" onClick={() => setCurrentPage?.('transactions', 'flagged')}>
+            <p className="text-sm text-gray-600">Flagged</p>
+            <p className="text-2xl font-bold text-red-600">{transactions.filter(t => t.status === 'flagged').length}</p>
           </div>
-
-          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">Transaction Details</h3>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Transaction ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      From → To
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Amount
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Risk Score
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredTransactions.map((transaction) => (
-                    <tr key={transaction.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{transaction.id}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{transaction.date}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          <div>{transaction.from_account}</div>
-                          <div className="text-xs text-gray-500">→ {transaction.to_account}</div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          ${transaction.amount.toLocaleString()}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRiskColor(transaction.risk_score)}`}>
-                          {transaction.risk_score}/10
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(transaction.status)}`}>
-                          {transaction.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() => setSelectedTransaction(transaction)}
-                          className="text-emerald-600 hover:text-emerald-700 flex items-center"
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          View
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <div className="bg-white p-4 rounded-lg shadow border-l-4 border-amber-500 cursor-pointer hover:bg-amber-50" onClick={() => setCurrentPage?.('transactions', 'suspicious')}>
+            <p className="text-sm text-gray-600">Suspicious</p>
+            <p className="text-2xl font-bold text-amber-600">{transactions.filter(t => t.status === 'suspicious').length}</p>
           </div>
-        </>
-      )}
-
-      {/* Transaction Detail Modal */}
-      {selectedTransaction && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-90vh overflow-y-auto">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Transaction Details: {selectedTransaction.id}
-                </h3>
-                <button
-                  onClick={() => setSelectedTransaction(null)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-            
-            <div className="p-6">
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Date</p>
-                  <p className="mt-1 text-sm text-gray-900">{selectedTransaction.date}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Amount</p>
-                  <p className="mt-1 text-sm text-gray-900 font-medium">
-                    ${selectedTransaction.amount.toLocaleString()}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">From Account</p>
-                  <p className="mt-1 text-sm text-gray-900">{selectedTransaction.from_account}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">To Account</p>
-                  <p className="mt-1 text-sm text-gray-900">{selectedTransaction.to_account}</p>
-                </div>
-              </div>
-
-              <div className="mb-6">
-                <p className="text-sm font-medium text-gray-500 mb-2">Description</p>
-                <p className="text-sm text-gray-900">{selectedTransaction.description}</p>
-              </div>
-
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-medium text-gray-500">AI Risk Assessment</p>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRiskColor(selectedTransaction.risk_score)}`}>
-                    {selectedTransaction.risk_score}/10
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className={`h-2 rounded-full ${selectedTransaction.risk_score >= 7 ? 'bg-red-500' : selectedTransaction.risk_score >= 4 ? 'bg-amber-500' : 'bg-green-500'}`}
-                    style={{ width: `${selectedTransaction.risk_score * 10}%` }}
-                  ></div>
-                </div>
-              </div>
-
-              {selectedTransaction.flags.length > 0 && (
-                <div>
-                  <p className="text-sm font-medium text-gray-500 mb-2">Risk Factors Detected</p>
-                  <div className="space-y-2">
-                    {selectedTransaction.flags.map((flag, index) => (
-                      <div key={index} className="flex items-center p-3 bg-red-50 rounded-lg border border-red-200">
-                        <AlertTriangle className="h-4 w-4 text-red-500 mr-2 flex-shrink-0" />
-                        <span className="text-sm text-red-800">{flag}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+          <div className="bg-white p-4 rounded-lg shadow border-l-4 border-green-500 cursor-pointer hover:bg-green-50" onClick={() => setCurrentPage?.('transactions', 'normal')}>
+            <p className="text-sm text-gray-600">Normal</p>
+            <p className="text-2xl font-bold text-green-600">{transactions.filter(t => t.status === 'normal').length}</p>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500 cursor-pointer hover:bg-blue-50" onClick={() => setCurrentPage?.('transactions', 'all')}>
+            <p className="text-sm text-gray-600">Total Analyzed</p>
+            <p className="text-2xl font-bold text-blue-600">{transactions.length}</p>
           </div>
         </div>
       )}
