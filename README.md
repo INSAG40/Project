@@ -14,3 +14,10 @@ Geographical Risk Assessment: Evaluates transaction risk based on country and re
 Comprehensive Reporting: Generates tabular reports and visual analytics to support investigative review.
 
 Machine Learning Module (Optional): Utilizes historical transaction data to predict high-risk activity using classification algorithms.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Prerequisites
+  -Make sure your system has the following installed:
+  -Python 3.10 or higher
+  -pip (Python package manager)
+  -Optional: virtualenv for isolating dependencies
