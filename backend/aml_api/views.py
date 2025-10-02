@@ -10,6 +10,8 @@ from .models import Transaction
 from .serializers import TransactionSerializer
 from django.http import HttpResponse
 import csv
+from datetime import datetime
+from rest_framework.permissions import AllowAny
 
 class RegisterAPI(generics.GenericAPIView):
     serializer_class = RegisterSerializer
@@ -69,10 +71,13 @@ class TransactionListCreateAPI(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        if not serializer.is_valid(raise_exception=True):
-            print("Transaction Serializer Errors:", serializer.errors)
         transaction = serializer.save()
-        transaction.perform_aml_analysis()
+        
+        # Only run AML if simulator didn't provide flags/status
+        if not transaction.flags:
+            transaction.perform_aml_analysis()
+        else:
+            transaction.save()
 
     def delete(self, request, *args, **kwargs):
         # Delete all transactions
@@ -117,3 +122,53 @@ class ExportAllTransactionsCSV(APIView):
                 '; '.join(transaction_data['flags']),
             ])
         return response
+
+@method_decorator(csrf_exempt, name='dispatch')
+class SimulatorTransactionAPI(APIView):
+    permission_classes = [AllowAny]
+    """
+    Endpoint for the simulator to POST transactions.
+    """
+
+    def post(self, request, *args, **kwargs):
+        data = request.data
+
+        # Required fields
+        required_fields = ['transaction_id', 'amount', 'currency', 'sender', 'receiver']
+        missing = [f for f in required_fields if f not in data]
+        if missing:
+            return Response({"error": f"Missing required fields: {missing}"}, status=400)
+
+        # Prepare timestamp
+        ts = data.get('timestamp')
+        if ts:
+            try:
+                ts = datetime.fromisoformat(ts)
+            except Exception:
+                ts = datetime.utcnow()
+        else:
+            ts = datetime.utcnow()
+
+        # Create Transaction instance
+        txn = Transaction(
+            id=data['transaction_id'],
+            date=ts.date(),
+            from_account=data['sender'],
+            to_account=data['receiver'],
+            amount=float(data['amount']),
+            description=data.get('description', ''),
+            risk_score=0.0,
+            flags=[],
+            status='normal'
+        )
+        txn.save()
+
+        # Run your existing AML analysis
+        txn.perform_aml_analysis()
+        txn.save()
+
+        return Response({
+            "transaction_id": txn.id,
+            "status": txn.status,
+            "alerts": txn.flags
+        }, status=201)
