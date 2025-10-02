@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { User, AuthState, LoginCredentials } from '../types/auth';
 
-const API_BASE_URL = 'http://localhost:8000/api/auth'; // Your Django backend URL
+const API_BASE_URL = 'http://localhost:8080/api/auth'; // Your Django backend URL
 
 export const useAuth = () => {
   const [authState, setAuthState] = useState<AuthState>({

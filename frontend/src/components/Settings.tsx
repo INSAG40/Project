@@ -6,7 +6,7 @@ import { User, Mail, Shield, Building, Save, Edit3, Eye, EyeOff, ToggleLeft, Tog
 interface SettingsProps {
   user: UserType;
   onLogout: () => void;
-  setCurrentPage: (page: 'dashboard' | 'transactions' | 'settings' | 'accounts') => void;
+  setCurrentPage: (page: 'dashboard' | 'transactions' | 'settings' | 'accounts' | 'reports' | 'stream') => void;
 }
 
 const Settings: React.FC<SettingsProps> = ({ user, onLogout, setCurrentPage }) => {
@@ -40,6 +40,8 @@ const Settings: React.FC<SettingsProps> = ({ user, onLogout, setCurrentPage }) =
     if (option === 'transactions') setCurrentPage('transactions');
     if (option === 'settings') setCurrentPage('settings');
     if (option === 'accounts') setCurrentPage('accounts');
+    if (option === 'reports') setCurrentPage('reports');
+    if (option === 'stream') setCurrentPage('stream');
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -100,9 +102,9 @@ const Settings: React.FC<SettingsProps> = ({ user, onLogout, setCurrentPage }) =
   };
 
   return (
-    <div className="min-h-screen bg-green-50">
+    <div className="min-h-screen bg-green-50 overflow-x-hidden">
       <SidePanel onSelect={handlePanelSelect} user={user} onLogout={onLogout} activePage="settings" />
-      <main className="ml-72 px-10 py-8 flex flex-col items-start min-h-screen">
+      <main className="ml-72 px-4 sm:px-10 py-8 flex flex-col items-start min-h-screen overflow-x-hidden">
         <div className="w-full max-w-4xl">
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Settings</h2>

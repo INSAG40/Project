@@ -23,7 +23,7 @@ import {
 interface AccountManagementProps {
   user: UserType;
   onLogout: () => void;
-  setCurrentPage: (page: 'dashboard' | 'transactions' | 'settings' | 'accounts') => void;
+  setCurrentPage: (page: 'dashboard' | 'transactions' | 'settings' | 'accounts' | 'reports' | 'stream') => void;
 }
 
 interface Account {
@@ -51,6 +51,8 @@ const AccountManagement: React.FC<AccountManagementProps> = ({ user, onLogout, s
     if (option === 'transactions') setCurrentPage('transactions');
     if (option === 'settings') setCurrentPage('settings');
     if (option === 'accounts') setCurrentPage('accounts');
+    if (option === 'reports') setCurrentPage('reports');
+    if (option === 'stream') setCurrentPage('stream');
   };
 
   // Mock data - replace with real API calls
@@ -118,6 +120,42 @@ const AccountManagement: React.FC<AccountManagementProps> = ({ user, onLogout, s
 
   const blockedAccounts = accounts.filter(account => account.status === 'blocked');
 
+  const exportAccountsToCSV = () => {
+    const rows = filteredAccounts.map(a => ({
+      id: a.id,
+      accountNumber: a.accountNumber,
+      accountHolder: a.accountHolder,
+      email: a.email,
+      status: a.status,
+      riskScore: a.riskScore,
+      lastActivity: a.lastActivity,
+      transactionCount: a.transactionCount,
+      totalAmount: a.totalAmount,
+      blockedDate: a.blockedDate || '',
+      blockedReason: a.blockedReason || '',
+    }));
+
+    const headers = Object.keys(rows[0] || {
+      id: '', accountNumber: '', accountHolder: '', email: '', status: '', riskScore: '', lastActivity: '', transactionCount: '', totalAmount: '', blockedDate: '', blockedReason: ''
+    });
+
+    const csv = [headers.join(','), ...rows.map(r => headers.map(h => {
+      const val = (r as any)[h];
+      const s = String(val ?? '');
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    }).join(','))].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `accounts_export_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
   const handleAccountAction = (accountId: string, action: 'block' | 'unblock' | 'suspend') => {
     setAccounts(prev => prev.map(account => {
       if (account.id === accountId) {
@@ -167,9 +205,9 @@ const AccountManagement: React.FC<AccountManagementProps> = ({ user, onLogout, s
   };
 
   return (
-    <div className="min-h-screen bg-green-50">
+    <div className="min-h-screen bg-green-50 overflow-x-hidden">
       <SidePanel onSelect={handlePanelSelect} user={user} onLogout={onLogout} activePage="accounts" />
-      <main className="ml-72 px-10 py-8 flex flex-col items-start min-h-screen">
+      <main className="ml-72 px-4 sm:px-10 py-8 flex flex-col items-start min-h-screen overflow-x-hidden">
         <div className="w-full max-w-7xl">
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Account Management</h2>
@@ -219,7 +257,7 @@ const AccountManagement: React.FC<AccountManagementProps> = ({ user, onLogout, s
 
                 <button
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
-                  onClick={() => alert('Export functionality will be implemented with backend')}
+                  onClick={exportAccountsToCSV}
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Export

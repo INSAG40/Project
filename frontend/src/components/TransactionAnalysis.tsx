@@ -4,7 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useAuth } from '../hooks/useAuth';
 import Papa from 'papaparse'; // For parsing CSV
 
-const API_BASE_URL = 'http://localhost:8000/api/auth';
+const API_BASE_URL = 'http://localhost:8080/api/auth';
 
 interface Transaction {
   id: string;
@@ -398,89 +398,101 @@ export const TransactionAnalysis: React.FC<TransactionAnalysisProps> = ({ setCur
         <p className="text-gray-600">AI-powered analysis of transaction patterns and suspicious activities</p>
       </div>
 
-      {/* Conditional File Upload Section */}
-      {transactions.length === 0 && ( // Only show when no transactions are loaded
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-          <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+      {/* File Upload Section - always visible with Clear Upload */}
+      <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-semibold text-gray-900 flex items-center">
             <Upload className="h-5 w-5 text-blue-500 mr-2" />
             Upload Transaction Files
           </h3>
-          
-          <div
-            className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-all duration-300 ${
-              dragActive
-                ? 'border-emerald-400 bg-emerald-50'
-                : 'border-gray-300 hover:border-emerald-400 hover:bg-gray-50'
-            }`}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
+          <button
+            onClick={() => {
+              if (window.confirm('Clear uploaded list and delete analyzed transactions?')) {
+                setUploadedFiles([]);
+                clearAllTransactions();
+              }
+            }}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center"
           >
-            <input
-              ref={inputRef}
-              type="file"
-              multiple
-              accept=".csv,.json"
-              onChange={handleChange}
-              className="hidden"
-            />
-            
-            <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h4 className="text-lg font-semibold text-gray-900 mb-2">
-              Drag and drop transaction files here or 
-              <button onClick={handleButtonClick} className="text-emerald-600 hover:text-emerald-700 font-bold ml-1">click to upload</button>
-            </h4>
-            <p className="text-gray-500 mb-4">
-              Supported formats: CSV, JSON
-            </p>
-            <p className="text-sm text-gray-400">
-              Maximum file size: 50MB per file
-            </p>
-          </div>
+            <Trash2 className="h-4 w-4 mr-2" />
+            Clear Upload
+          </button>
+        </div>
 
-          {/* File Processing Status */}
-          {uploadedFiles.length > 0 && (
-            <div className="mt-6">
-              <h4 className="text-lg font-semibold text-gray-900 mb-4">Processing Status</h4>
-              <div className="space-y-4">
-                {uploadedFiles.map((fileState) => (
-                  <div key={fileState.id} className="bg-gray-50 border rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center">
-                        <File className="h-5 w-5 text-gray-400 mr-3" />
-                        <div>
-                          <p className="font-medium text-gray-900">{fileState.file.name}</p>
-                          <p className="text-sm text-gray-500">{formatFileSize(fileState.file.size)}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        {getStatusIcon(fileState.status)}
-                        <span className="text-sm font-medium text-gray-700">
-                          {fileState.message}
-                        </span>
+        <div
+          className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-all duration-300 ${
+            dragActive
+              ? 'border-emerald-400 bg-emerald-50'
+              : 'border-gray-300 hover:border-emerald-400 hover:bg-gray-50'
+          }`}
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
+        >
+          <input
+            ref={inputRef}
+            type="file"
+            multiple
+            accept=".csv,.json"
+            onChange={handleChange}
+            className="hidden"
+          />
+
+          <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h4 className="text-lg font-semibold text-gray-900 mb-2">
+            Drag and drop transaction files here or 
+            <button onClick={handleButtonClick} className="text-emerald-600 hover:text-emerald-700 font-bold ml-1">click to upload</button>
+          </h4>
+          <p className="text-gray-500 mb-4">
+            Supported formats: CSV, JSON
+          </p>
+          <p className="text-sm text-gray-400">
+            Maximum file size: 50MB per file
+          </p>
+        </div>
+
+        {/* File Processing Status */}
+        {uploadedFiles.length > 0 && (
+          <div className="mt-6">
+            <h4 className="text-lg font-semibold text-gray-900 mb-4">Processing Status</h4>
+            <div className="space-y-4">
+              {uploadedFiles.map((fileState) => (
+                <div key={fileState.id} className="bg-gray-50 border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center">
+                      <File className="h-5 w-5 text-gray-400 mr-3" />
+                      <div>
+                        <p className="font-medium text-gray-900">{fileState.file.name}</p>
+                        <p className="text-sm text-gray-500">{formatFileSize(fileState.file.size)}</p>
                       </div>
                     </div>
-                    
-                    <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                      <div
-                        className={`h-2 rounded-full transition-all duration-300 ${
-                          fileState.status === 'completed'
-                            ? 'bg-green-500'
-                            : fileState.status === 'error'
-                            ? 'bg-red-500'
-                            : 'bg-blue-500'
-                        }`}
-                        style={{ width: `${fileState.progress}%` }}
-                      ></div>
+                    <div className="flex items-center space-x-2">
+                      {getStatusIcon(fileState.status)}
+                      <span className="text-sm font-medium text-gray-700">
+                        {fileState.message}
+                      </span>
                     </div>
                   </div>
-                ))}
-              </div>
+
+                  <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                    <div
+                      className={`h-2 rounded-full transition-all duration-300 ${
+                        fileState.status === 'completed'
+                          ? 'bg-green-500'
+                          : fileState.status === 'error'
+                          ? 'bg-red-500'
+                          : 'bg-blue-500'
+                      }`}
+                      style={{ width: `${fileState.progress}%` }}
+                    ></div>
+                  </div>
+                </div>
+              ))}
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
 
       {/* Charts Toggle */}
       <div className="bg-white rounded-lg shadow-lg p-6 mb-6">

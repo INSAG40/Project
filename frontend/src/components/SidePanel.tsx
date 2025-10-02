@@ -1,5 +1,6 @@
 import React from 'react';
 import { Settings, Users, FileText, HelpCircle, LayoutDashboard } from 'lucide-react';
+import { Radio } from 'lucide-react';
 
 import { LogOut, User as UserIcon } from 'lucide-react';
 import { User as UserType } from '../types/auth';
@@ -69,11 +70,26 @@ export const SidePanel: React.FC<SidePanelProps> = ({ onSelect, user, onLogout, 
           Account Management
         </button>
         <button
-          className="flex items-center w-full px-6 py-4 hover:bg-blue-800/50 transition-colors text-lg font-medium text-blue-100 border-l-4 border-transparent hover:border-emerald-400"
+          className={`flex items-center w-full px-6 py-4 hover:bg-blue-800/50 transition-colors text-lg font-medium border-l-4 ${
+            activePage === 'reports' 
+              ? 'bg-blue-800/30 text-emerald-200 border-emerald-400' 
+              : 'text-blue-100 border-transparent hover:border-emerald-400'
+          }`}
           onClick={() => onSelect('reports')}
         >
-          <FileText className="mr-4 h-6 w-6 text-blue-400" />
+          <FileText className={`mr-4 h-6 w-6 ${activePage === 'reports' ? 'text-emerald-400' : 'text-blue-400'}`} />
           Reports
+        </button>
+        <button
+          className={`flex items-center w-full px-6 py-4 hover:bg-blue-800/50 transition-colors text-lg font-medium border-l-4 ${
+            activePage === 'stream' 
+              ? 'bg-blue-800/30 text-emerald-200 border-emerald-400' 
+              : 'text-blue-100 border-transparent hover:border-emerald-400'
+          }`}
+          onClick={() => onSelect('stream')}
+        >
+          <Radio className={`mr-4 h-6 w-6 ${activePage === 'stream' ? 'text-emerald-400' : 'text-blue-400'}`} />
+          Live Stream
         </button>
         <button
           className="flex items-center w-full px-6 py-4 hover:bg-blue-800/50 transition-colors text-lg font-medium text-blue-100 border-l-4 border-transparent hover:border-emerald-400"

@@ -9,6 +9,10 @@ from .serializers import RegisterSerializer, UserSerializer, LoginSerializer
 from .models import Transaction
 from .serializers import TransactionSerializer
 from django.http import HttpResponse
+from django.conf import settings
+import requests
+from collections import deque
+from datetime import datetime, timezone
 import csv
 
 class RegisterAPI(generics.GenericAPIView):
@@ -117,3 +121,138 @@ class ExportAllTransactionsCSV(APIView):
                 '; '.join(transaction_data['flags']),
             ])
         return response
+
+
+class PingAPI(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        return Response({
+            "status": "ok",
+            "auth": True,
+            "base": "/api/auth/",
+            "marble_base_url": getattr(settings, 'MARBLE_BASE_URL', None)
+        })
+
+
+class MarbleRulesProxyAPI(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        base = settings.MARBLE_BASE_URL.rstrip('/')
+        try:
+            res = requests.get(f"{base}/rules")
+            return Response(res.json(), status=res.status_code)
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+
+class MarbleScoreProxyAPI(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        base = settings.MARBLE_BASE_URL.rstrip('/')
+        try:
+            res = requests.post(f"{base}/score", json=request.data)
+            return Response(res.json(), status=res.status_code)
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+
+class MarbleEventsAPI(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        try:
+            # Try proxying to Marble; if it fails or returns empty, fallback to in-memory recent events buffer
+            base = settings.MARBLE_BASE_URL.rstrip('/')
+            limit = int(request.query_params.get('limit', 50))
+            since = request.query_params.get('since')  # ISO timestamp
+            # Attempt Marble proxy
+            try:
+                query = f"limit={limit}"
+                if since:
+                    query += f"&since={since}"
+                res = requests.get(f"{base}/events?{query}", timeout=5)
+                if res.ok and res.headers.get('content-type', '').startswith('application/json'):
+                    data = res.json()
+                    events = data if isinstance(data, list) else data.get('events', [])
+                    if events:
+                        return Response({"events": events}, status=200)
+            except Exception as e:
+                print('Marble proxy error:', e)
+
+            # Fallback to in-memory
+            events = list(RECENT_EVENTS)
+            # Filter by since
+            if since:
+                try:
+                    since_dt = datetime.fromisoformat(since.replace('Z', '+00:00'))
+                    events = [e for e in events if _parse_iso(e.get('timestamp')) >= since_dt]
+                except Exception as e:
+                    print('Since parsing error:', e)
+            return Response({"events": events[-limit:]}, status=200)
+        except Exception as e:
+            print('Events endpoint unexpected error:', e)
+            return Response({"events": []}, status=200)
+
+
+# In-memory recent events buffer for demo fallback
+RECENT_EVENTS: deque = deque(maxlen=200)
+
+def _iso_now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+def _parse_iso(s: str | None) -> datetime:
+    if not s:
+        return datetime.min.replace(tzinfo=timezone.utc)
+    try:
+        return datetime.fromisoformat(s.replace('Z', '+00:00'))
+    except Exception:
+        return datetime.min.replace(tzinfo=timezone.utc)
+
+
+class MarbleDemoGenerateEventAPI(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        try:
+            # Generate a demo scored transaction event and store in-memory
+            body = request.data or {}
+            raw_score = body.get('score', 0.5)
+            try:
+                score = float(raw_score)
+            except Exception:
+                score = 0.5
+            amount = body.get('amount', 1234.56)
+            try:
+                amount = float(amount)
+            except Exception:
+                amount = 1234.56
+            ev = {
+                "id": body.get('id') or f"demo-{int(datetime.now().timestamp()*1000)}",
+                "type": body.get('type', 'transaction_scored'),
+                "timestamp": _iso_now(),
+                "payload": {
+                    "transactionId": body.get('transactionId', f"txn-{int(datetime.now().timestamp())}"),
+                    "amount": amount,
+                    "currency": body.get('currency', 'USD'),
+                    "from": body.get('from', 'ACC-001234'),
+                    "to": body.get('to', 'ACC-009876'),
+                    "score": score,
+                    "risk": 'high' if score >= 0.8 else ('medium' if score >= 0.5 else 'low'),
+                },
+            }
+            RECENT_EVENTS.append(ev)
+            return Response(ev, status=201)
+        except Exception as e:
+            print('demo-generate error:', e)
+            return Response({"error": str(e)}, status=500)
+
+    def delete(self, request):
+        try:
+            RECENT_EVENTS.clear()
+            return Response(status=204)
+        except Exception as e:
+            print('demo-clear error:', e)
+            return Response({"error": str(e)}, status=500)

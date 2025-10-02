@@ -16,8 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from aml_api.views import PingAPI
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('aml_api.urls')), # Include your new app's URLs
+    path('api/ping/', PingAPI.as_view(), name='root-ping'),
 ]

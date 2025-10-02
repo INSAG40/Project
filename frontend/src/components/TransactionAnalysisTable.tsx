@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Eye, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
-const API_BASE_URL = 'http://localhost:8000/api/auth';
+const API_BASE_URL = 'http://localhost:8080/api/auth';
 
 interface Transaction {
   id: string;

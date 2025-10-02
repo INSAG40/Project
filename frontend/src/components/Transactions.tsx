@@ -5,12 +5,12 @@ import { User as UserType } from '../types/auth';
 import { Search, Filter, Download, Trash2, BarChart3 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
-const API_BASE_URL = 'http://localhost:8000/api/auth';
+const API_BASE_URL = 'http://localhost:8080/api/auth';
 
 interface TransactionsProps {
   user: UserType;
   onLogout: () => void;
-  setCurrentPage: (page: 'dashboard' | 'transactions' | 'settings' | 'accounts') => void;
+  setCurrentPage: (page: 'dashboard' | 'transactions' | 'settings' | 'accounts' | 'reports' | 'stream') => void;
   initialFilter?: 'all' | 'normal' | 'suspicious' | 'flagged';
 }
 
@@ -31,6 +31,8 @@ const Transactions: React.FC<TransactionsProps> = ({ user, onLogout, setCurrentP
     if (option === 'transactions') setCurrentPage('transactions');
     if (option === 'settings') setCurrentPage('settings');
     if (option === 'accounts') setCurrentPage('accounts');
+    if (option === 'reports') setCurrentPage('reports');
+    if (option === 'stream') setCurrentPage('stream');
     // Add more navigation as needed
   };
 
@@ -102,9 +104,9 @@ const Transactions: React.FC<TransactionsProps> = ({ user, onLogout, setCurrentP
   }, [isAuthenticated]);
 
   return (
-    <div className="min-h-screen bg-green-50">
+    <div className="min-h-screen bg-green-50 overflow-x-hidden">
       <SidePanel onSelect={handlePanelSelect} user={user} onLogout={onLogout} activePage="transactions" />
-      <main className="ml-72 px-10 py-8 flex flex-col items-center min-h-screen">
+      <main className="ml-72 px-4 sm:px-10 py-8 flex flex-col items-center min-h-screen overflow-x-hidden">
         <button
           className="mb-6 self-start px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
           onClick={() => setCurrentPage('dashboard')}
