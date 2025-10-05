@@ -1,11 +1,13 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Transaction
+from .models import RuleConfiguration, Transaction
 
+# ----------------- User Serializers -----------------
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'username', 'email', 'first_name', 'last_name')
+
 
 class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
@@ -23,9 +25,17 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
         return user
 
+
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField(write_only=True)
+
+
+# ----------------- AML / Rule Serializers -----------------
+class RuleConfigurationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RuleConfiguration
+        fields = '__all__'
 
 
 class TransactionSerializer(serializers.ModelSerializer):

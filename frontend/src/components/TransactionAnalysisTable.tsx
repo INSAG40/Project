@@ -53,6 +53,25 @@ export const TransactionAnalysisTable: React.FC<{
 
   useEffect(() => { fetchTransactions(); }, [fetchTransactions]);
 
+  useEffect(() => {
+    const ws = new WebSocket('ws://localhost:8000/ws/transactions/');
+
+    ws.onmessage = (event) => {
+      const newTransaction: Transaction = JSON.parse(event.data);
+      setTransactions(prev => {
+        const exists = prev.find(t => t.id === newTransaction.id);
+        if (exists) {
+          // Update existing transaction
+          return prev.map(t => t.id === newTransaction.id ? newTransaction : t);
+        }
+        // Add new transaction at the top
+        return [newTransaction, ...prev];
+      });
+    };
+
+    return () => ws.close();
+  }, []);
+
   const filteredTransactions = transactions.filter((transaction) => {
     const matchesSearch =
       transaction.id.toLowerCase().includes(searchTerm.toLowerCase()) ||

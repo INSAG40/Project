@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'rest_framework', # For building REST APIs
     'rest_framework.authtoken', # For token authentication
     'corsheaders', # For handling CORS
+    'channels', # For WebSocket support
 ]
 
 MIDDLEWARE = [
@@ -141,4 +142,12 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ]
+}
+
+ASGI_APPLICATION = 'backend.asgi.application'
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
 }

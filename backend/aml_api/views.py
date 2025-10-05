@@ -1,13 +1,12 @@
-from rest_framework import generics, permissions, status
+from rest_framework import generics, permissions, status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate, login
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from .serializers import RegisterSerializer, UserSerializer, LoginSerializer
-from .models import Transaction
-from .serializers import TransactionSerializer
+from .serializers import RegisterSerializer, UserSerializer, LoginSerializer, RuleConfigurationSerializer, TransactionSerializer
+from .models import Transaction, RuleConfiguration
 from django.http import HttpResponse
 import csv
 from datetime import datetime
@@ -66,7 +65,7 @@ class UserAPI(generics.RetrieveAPIView):
 
 
 class TransactionListCreateAPI(generics.ListCreateAPIView):
-    queryset = Transaction.objects.all()
+    queryset = Transaction.objects.all().order_by('-date', '-id')
     serializer_class = TransactionSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -83,6 +82,13 @@ class TransactionListCreateAPI(generics.ListCreateAPIView):
         # Delete all transactions
         Transaction.objects.all().delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def get_queryset(self):
+        last_id = self.request.query_params.get('last_id')
+        if last_id:
+            return Transaction.objects.filter(id__gt=last_id).order_by('date', 'id')
+        return Transaction.objects.all().order_by('-date', '-id')
+    
 
 
 class TransactionRetrieveUpdateDestroyAPI(generics.RetrieveUpdateDestroyAPIView):
@@ -172,3 +178,11 @@ class SimulatorTransactionAPI(APIView):
             "status": txn.status,
             "alerts": txn.flags
         }, status=201)
+
+class RuleConfigurationViewSet(viewsets.ModelViewSet):
+    queryset = RuleConfiguration.objects.all()
+    serializer_class = RuleConfigurationSerializer
+
+class TransactionViewSet(viewsets.ModelViewSet):
+    queryset = Transaction.objects.all()
+    serializer_class = TransactionSerializer

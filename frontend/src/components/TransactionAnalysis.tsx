@@ -307,6 +307,41 @@ export const TransactionAnalysis: React.FC<TransactionAnalysisProps> = ({ setCur
     fetchTransactions();
   }, [fetchTransactions]);
 
+  // WebSocket effect for live transaction updates
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    // Connect to WebSocket
+    const ws = new WebSocket("ws://127.0.0.1:8000/ws/transactions/");
+
+    ws.onopen = () => {
+      console.log("WebSocket connected for live transactions.");
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data: Transaction = JSON.parse(event.data);
+        console.log("Received live transaction:", data);
+
+        // Add new transaction at the top
+        setTransactions((prev) => [data, ...prev]);
+      } catch (err) {
+        console.error("Error parsing WebSocket message:", err);
+      }
+    };
+
+    ws.onclose = () => {
+      console.log("WebSocket disconnected.");
+    };
+
+    ws.onerror = (err) => {
+      console.error("WebSocket error:", err);
+    };
+
+    // Cleanup on unmount
+    return () => ws.close();
+  }, [isAuthenticated]);
+
   // Simplified Chart data for risk score distribution (assuming fetched data)
   const riskScoreData = [
     { range: '0-2', count: transactions.filter(t => t.risk_score >= 0 && t.risk_score < 2).length, color: '#059669' },
